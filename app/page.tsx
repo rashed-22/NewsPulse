@@ -28,44 +28,36 @@ function Home() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  // ⭐ Load news based on URL
+  // ⭐ Load news based on URL or reset
   useEffect(() => {
     setIsLoading(true);
     setPage(1);
 
-    // -------------------------------------
     // CATEGORY mode
-    // -------------------------------------
     if (categoryFromURL) {
       setActiveCat(categoryFromURL);
 
       fetchCategoryNews(categoryFromURL, 1).then((news) => {
         setData(news?.articles || []);
-        setHasMore(news?.articles?.length >= 20);
+        setHasMore((news?.articles || []).length >= 20);
         setIsLoading(false);
       });
 
       return;
     }
 
-    // -------------------------------------
-    // RESET mode (home reset)
-    // -------------------------------------
-    if (isReset) {
-      setActiveCat("");
-    }
+    // RESET mode
+    if (isReset) setActiveCat("");
 
-    // -------------------------------------
     // DEFAULT TOP NEWS
-    // -------------------------------------
     fetchTopNews(1).then((news) => {
       setData(news?.articles || []);
-      setHasMore(news?.articles?.length >= 20);
+      setHasMore((news?.articles || []).length >= 20);
       setIsLoading(false);
     });
   }, [isReset, categoryFromURL]);
 
-  // ⭐ Search
+  // ⭐ Search functionality
   const handleSearch = async () => {
     if (!query.trim()) return;
 
@@ -75,22 +67,31 @@ function Home() {
     setData(result?.articles || []);
     setPage(1);
     setActiveCat("");
-    setHasMore(result?.articles?.length >= 20);
+    setHasMore((result?.articles || []).length >= 20);
     setIsLoading(false);
   };
 
-  // ⭐ Load More (only works in top news)
+  // ⭐ FIXED Load More (works for TOP + CATEGORY)
   const loadMore = async () => {
     const nextPage = page + 1;
     setPage(nextPage);
 
-    const moreNews = await fetchTopNews(nextPage);
-    if (!moreNews?.articles?.length) {
+    let moreNews;
+
+    if (activeCat) {
+      moreNews = await fetchCategoryNews(activeCat, nextPage);
+    } else {
+      moreNews = await fetchTopNews(nextPage);
+    }
+
+    const articles = moreNews?.articles || [];
+
+    if (!articles.length) {
       setHasMore(false);
       return;
     }
 
-    setData((prev) => [...prev, ...moreNews.articles]);
+    setData((prev) => [...prev, ...articles]);
   };
 
   return (
@@ -115,7 +116,8 @@ function Home() {
 
         <button
           onClick={handleSearch}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold shadow-md hover:opacity-90 transition"
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 
+                     text-white font-semibold shadow-md hover:opacity-90 transition"
         >
           Search
         </button>
@@ -159,7 +161,7 @@ function Home() {
       </div>
 
       {/* Load More */}
-      {!isLoading && hasMore && !activeCat && !query && (
+      {!isLoading && hasMore && (
         <div className="text-center mt-6">
           <button
             onClick={loadMore}
@@ -190,7 +192,5 @@ function LoadingCard() {
 }
 
 function LoadingScreen() {
-  return (
-    <div className="text-center text-gray-400 p-10">Loading…</div>
-  );
+  return <div className="text-center text-gray-400 p-10">Loading…</div>;
 }
