@@ -1,42 +1,63 @@
 "use client";
 
-import { useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import NewsCard from "@/components/NewsCard";
 import { fetchTopNews, searchNews, fetchCategoryNews } from "@/lib/newsapi";
-import { useRouter } from "next/navigation";
 
-export default function Home({ resetHome }: any) {
+// ⭐ Wrapper required for Vercel SSR
+export default function HomeWrapper() {
+  return (
+    <Suspense fallback={<LoadingScreen />}>
+      <Home />
+    </Suspense>
+  );
+}
+
+function Home() {
   const params = useSearchParams();
+  const router = useRouter();
+
   const isReset = params.get("reset") === "true";
+  const categoryFromURL = params.get("category");
+
   const [query, setQuery] = useState("");
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeCat, setActiveCat] = useState("");
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const categoryFromURL = params.get("category");
-  const router = useRouter();
 
-  // Load news on first render
+  // ⭐ Load news based on URL
   useEffect(() => {
     setIsLoading(true);
     setPage(1);
 
+    // -------------------------------------
+    // CATEGORY mode
+    // -------------------------------------
     if (categoryFromURL) {
       setActiveCat(categoryFromURL);
+
       fetchCategoryNews(categoryFromURL, 1).then((news) => {
         setData(news?.articles || []);
         setHasMore(news?.articles?.length >= 20);
         setIsLoading(false);
       });
-      return; // stop here
+
+      return;
     }
 
+    // -------------------------------------
+    // RESET mode (home reset)
+    // -------------------------------------
     if (isReset) {
       setActiveCat("");
     }
 
+    // -------------------------------------
+    // DEFAULT TOP NEWS
+    // -------------------------------------
     fetchTopNews(1).then((news) => {
       setData(news?.articles || []);
       setHasMore(news?.articles?.length >= 20);
@@ -44,25 +65,26 @@ export default function Home({ resetHome }: any) {
     });
   }, [isReset, categoryFromURL]);
 
-  // Search handler
+  // ⭐ Search
   const handleSearch = async () => {
     if (!query.trim()) return;
 
     setIsLoading(true);
     const result = await searchNews(query, 1);
+
     setData(result?.articles || []);
     setPage(1);
+    setActiveCat("");
     setHasMore(result?.articles?.length >= 20);
     setIsLoading(false);
   };
 
-  // 🔥 Load More Pagination
+  // ⭐ Load More (only works in top news)
   const loadMore = async () => {
     const nextPage = page + 1;
     setPage(nextPage);
 
     const moreNews = await fetchTopNews(nextPage);
-
     if (!moreNews?.articles?.length) {
       setHasMore(false);
       return;
@@ -73,17 +95,9 @@ export default function Home({ resetHome }: any) {
 
   return (
     <main className="px-5 py-10 max-w-6xl mx-auto space-y-8">
-      {/* LOGO for reset */}
+      {/* LOGO Reset */}
       <h1
-        onClick={() => {
-          // client side reset
-          setQuery("");
-          setIsLoading(true);
-          fetchTopNews().then((news) => {
-            setData(news?.articles || []);
-            setIsLoading(false);
-          });
-        }}
+        onClick={() => router.push("/?reset=true")}
         className="text-5xl font-black mb-6 text-center tracking-tight drop-shadow cursor-pointer"
       >
         NewsPulse
@@ -91,21 +105,17 @@ export default function Home({ resetHome }: any) {
 
       {/* Search Bar */}
       <div className="mb-6 flex gap-3 items-center">
-        <div className="w-full relative">
-          <input
-            type="text"
-            placeholder="Search latest news…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full p-3 pl-4 rounded-xl bg-zinc-900/70 border border-zinc-700 text-white
-                 focus:border-blue-500 outline-none backdrop-blur-sm shadow-inner"
-          />
-        </div>
+        <input
+          type="text"
+          placeholder="Search latest news…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="w-full p-3 pl-4 rounded-xl bg-zinc-900/70 border border-zinc-700 text-white"
+        />
 
         <button
           onClick={handleSearch}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 
-               text-white font-semibold shadow-md hover:opacity-90 transition"
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold shadow-md hover:opacity-90 transition"
         >
           Search
         </button>
@@ -113,30 +123,25 @@ export default function Home({ resetHome }: any) {
 
       {/* Category Bar */}
       <div className="flex gap-3 flex-wrap mb-6 justify-center">
-        {[
-          "business",
-          "technology",
-          "sports",
-          "health",
-          "science",
-          "entertainment",
-        ].map((cat) => (
-          <button
-            key={cat}
-            onClick={() => {
-              setActiveCat(cat);
-              router.push(`/?category=${cat}`);
-            }}
-            className={`px-4 py-2 rounded-full text-sm capitalize transition shadow-sm
-    ${
-      activeCat === cat
-        ? "bg-blue-600 text-white border-blue-400"
-        : "bg-zinc-800 text-white border border-zinc-700 hover:bg-zinc-700"
-    }`}
-          >
-            {cat}
-          </button>
-        ))}
+        {["business", "technology", "sports", "health", "science", "entertainment"].map(
+          (cat) => (
+            <button
+              key={cat}
+              onClick={() => {
+                setActiveCat(cat);
+                router.push(`/?category=${cat}`);
+              }}
+              className={`px-4 py-2 rounded-full text-sm capitalize transition shadow-sm
+                ${
+                  activeCat === cat
+                    ? "bg-blue-600 text-white border-blue-400"
+                    : "bg-zinc-800 text-white border border-zinc-700 hover:bg-zinc-700"
+                }`}
+            >
+              {cat}
+            </button>
+          )
+        )}
       </div>
 
       {/* News Grid */}
@@ -153,8 +158,8 @@ export default function Home({ resetHome }: any) {
         )}
       </div>
 
-      {/* Load More Button */}
-      {!isLoading && hasMore && (
+      {/* Load More */}
+      {!isLoading && hasMore && !activeCat && !query && (
         <div className="text-center mt-6">
           <button
             onClick={loadMore}
@@ -165,16 +170,15 @@ export default function Home({ resetHome }: any) {
         </div>
       )}
 
-      {/* No more news message */}
+      {/* No More */}
       {!hasMore && (
-        <p className="text-center text-gray-400 mt-6">
-          No more news available.
-        </p>
+        <p className="text-center text-gray-400 mt-6">No more news available.</p>
       )}
     </main>
   );
 }
 
+// ⭐ Loading Components
 function LoadingCard() {
   return (
     <div className="border border-zinc-800 rounded-lg p-5 bg-zinc-900 animate-pulse">
@@ -182,5 +186,11 @@ function LoadingCard() {
       <div className="h-4 bg-zinc-800 rounded w-3/4 mb-2"></div>
       <div className="h-3 bg-zinc-800 rounded w-full"></div>
     </div>
+  );
+}
+
+function LoadingScreen() {
+  return (
+    <div className="text-center text-gray-400 p-10">Loading…</div>
   );
 }
