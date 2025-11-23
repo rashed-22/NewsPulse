@@ -5,8 +5,6 @@ A modern news portal that fetches **live news** from NewsAPI and allows users to
 
 ## 🚀 Project Overview
 
-**NewsPulse** is a full-stack news application built as part of the **RDI Student Assistant Preliminary Task**.
-
 The project demonstrates:
 - Fetching real-time news from **NewsAPI**
 - Search functionality with keyword filtering
