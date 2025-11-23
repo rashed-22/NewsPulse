@@ -53,7 +53,7 @@ export default function MyArticles() {
             >
               {/* Image */}
               <img
-                src={item.image || "/no-image.jpg"}
+                src={item.image_url || "/no-image.jpg"}
                 className="w-full h-52 object-cover"
                 alt={item.title}
               />
