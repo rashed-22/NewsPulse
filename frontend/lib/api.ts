@@ -1,6 +1,6 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export async function getNews() {
-  const res = await fetch("${BASE_URL}/news/", { cache: "no-store" });
+  const res = await fetch(`${BASE_URL}/proxy-news/`, { cache: "no-store" });
   return res.json();
 }
