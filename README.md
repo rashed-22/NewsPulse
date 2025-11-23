@@ -1,4 +1,4 @@
-### Project Demo Link
+### Project Demo 
 https://news-pulse-azure.vercel.app/
 
 # 📰 NewsPulse  
