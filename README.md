@@ -2,7 +2,7 @@
 https://news-pulse-azure.vercel.app/
 
 # 📰 NewsPulse  
-A modern news portal that fetches **live news** from NewsAPI and allows users to **search**, **filter by category**, **paginate**, and manage **custom articles** using a Django REST backend and a Next.js frontend.
+A modern news platform built with a Django REST backend and a Next.js frontend. It integrates live content from NewsAPI and provides users with advanced features, including keyword search, category-based filtering, and paginated news browsing. Additionally, the system supports full CRUD (Create, Read, Update, Delete) functionality for managing custom articles, providing a comprehensive and flexible news management experience.
 
 ---
 
