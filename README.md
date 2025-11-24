@@ -159,7 +159,7 @@ NewsPulse/
 
 ```
 
-### 🔥 How It Works
+### 🔥 How API Works
 
                 ┌──────────────────────────┐
                 │        User Device       │
